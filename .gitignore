@@ -33,3 +33,6 @@ logs
 
 # Environment variables
 .env*
+
+*.bak
+.bak*

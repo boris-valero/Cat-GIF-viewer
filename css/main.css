@@ -1,26 +1,26 @@
-#app-content{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+#app-content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
 }
 
 #catgifs {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
 }
 
 #catgifs > button {
-    margin-bottom: 30px;
+	margin-bottom: 30px;
 }
 
-.gif-wrapper{
-    display: flex;
-    align-items: center;
+.gif-wrapper {
+	display: flex;
+	align-items: center;
 }
 
-#catgifs.fixed-size img{
-    width: auto;
-    height: 100px;
+#catgifs.fixed-size img {
+	width: auto;
+	height: 100px;
 }

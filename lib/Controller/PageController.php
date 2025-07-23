@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace OCA\CatGifs\Controller;
 
-
 use Exception;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
@@ -34,41 +33,53 @@ use Throwable;
 use OCA\CatGifs\AppInfo\Application;
 use OCA\CatGifs\Service\ImageService;
 
-class PageController extends Controller
-{
+class PageController extends Controller {
+
 	public const FIXED_GIF_SIZE_CONFIG_KEY = 'fixed_gif_size';
 
 	public const CONFIG_KEYS = [
 		self::FIXED_GIF_SIZE_CONFIG_KEY,
 	];
 
+	/**
+	 * @var IInitialState
+	 */
 	private $initialStateService;
-
+	/**
+	 * @var IConfig
+	 */
 	private $config;
+	/**
+	 * @var string|null
+	 */
+	private $userId;
 
-	private $userID;
-
-	public function  __construct(
-		string $appName,
-		IRequest $request,
-		IInitialState $initialStateService,
-		IConfig $config,
-		?string $userId
-	) {
+	public function __construct(string $appName,
+								IRequest $request,
+								IInitialState $initialStateService,
+								IConfig $config,
+								?string $userId) {
 		parent::__construct($appName, $request);
 		$this->initialStateService = $initialStateService;
 		$this->config = $config;
-		$this->userID = $userId;
+		$this->userId = $userId;
 	}
+
+	/**
+	 * This returns the template of the main app's page
+	 * It adds some initialState data (file list and fixed_gif_size config value)
+	 * and also provide some data to the template (app version)
+	 *
+	 * @return TemplateResponse
+	 */
 	#[NoCSRFRequired]
 	#[NoAdminRequired]
-	#[FrontpageRoute(verb: 'GET', url: '/')]
-	public function mainPage(): TemplateResponse
-	{
-		$fileName = $this->getGifFileNameList();
-		$fixedGifSize = $this->config->getUserValue($this->userID, Application::APP_ID, self::FIXED_GIF_SIZE_CONFIG_KEY);
+	#[FrontpageRoute(verb: 'GET', url: '/')] // this tells Nextcloud to link GET requests to /index.php/apps/catgifs/ with the "mainPage" method
+	public function mainPage(): TemplateResponse {
+		$fileNameList = $this->getGifFilenameList();
+		$fixedGifSize = $this->config->getUserValue($this->userId, Application::APP_ID, self::FIXED_GIF_SIZE_CONFIG_KEY);
 		$myInitialState = [
-			'file_name_list' => $fileName,
+			'file_name_list' => $fileNameList,
 			self::FIXED_GIF_SIZE_CONFIG_KEY => $fixedGifSize,
 		];
 		$this->initialStateService->provideInitialState('tutorial_initial_state', $myInitialState);
@@ -82,8 +93,13 @@ class PageController extends Controller
 			]
 		);
 	}
-	private function getGifFilenameList(): array
-	{
+
+	/**
+	 * Get the names of files stored in apps/my_app/img/gifs/
+	 *
+	 * @return array
+	 */
+	private function getGifFilenameList(): array {
 		$path = dirname(__DIR__, 2) . '/img/gifs';
 		$names = array_filter(scandir($path), static function ($name) {
 			return $name !== '.' && $name !== '..';
@@ -91,15 +107,22 @@ class PageController extends Controller
 		return array_values($names);
 	}
 
+	/**
+	 * This is an API endpoint to set a user config value
+	 * It returns a simple DataResponse: a message to be displayed
+	 *
+	 * @param string $key
+	 * @param string $value
+	 * @return DataResponse
+	 * @throws PreConditionNotMetException
+	 */
 	#[NoAdminRequired]
-	#[FrontpageRoute(verb: 'PUT', url: '/config')]
-
-	public function saveConfig(string $key, string $value): DataResponse
-	{
+	#[FrontpageRoute(verb: 'PUT', url: '/config')] // this tells Nextcloud to link PUT requests to /index.php/apps/catgifs/config with the "saveConfig" method
+	public function saveConfig(string $key, string $value): DataResponse {
 		if (in_array($key, self::CONFIG_KEYS, true)) {
-			$this->config->setUserValue($this->userID, Application::APP_ID, $key, $value);
+			$this->config->setUserValue($this->userId, Application::APP_ID, $key, $value);
 			return new DataResponse([
-				'message' => 'Everything went fine'
+				'message' => 'Everything went fine',
 			]);
 		}
 		return new DataResponse([
